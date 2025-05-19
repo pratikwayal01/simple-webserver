@@ -1,18 +1,23 @@
-From:node:v18.16.0-slim
+# Use a smaller Node.js base image
+FROM node:v18.16.0-slim
 
 # Set the working directory
 WORKDIR /app
-# Copy package.json and package-lock.json
+
+# Ensure node_modules is not copied from host
+# Use .dockerignore for that (see below)
+
+# Copy package files first (to optimize caching)
 COPY package.json package-lock.json ./
-# Install dependencies  
+
+# Install only production dependencies
 RUN npm install --production
-# Copy the rest of the application code
+
+# Now copy the rest of the application code
 COPY . .
-# Expose the port the app runs on
+
+# Expose the app port
 EXPOSE 3000
+
 # Start the application
 CMD ["node", "server.js"]
-
-# Use the default command to run the application
-# CMD ["npm", "start"]
-# Use the default command to run the application        
