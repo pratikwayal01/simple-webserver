@@ -1,0 +1,34 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main   # Change this to your deployment branch if needed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/mykey.pem
+          chmod 600 ~/.ssh/mykey.pem
+          ssh-keyscan -H ec2-13-233-116-158.ap-south-1.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Deploy to EC2 and run server
+        run: |
+          ssh -i ~/.ssh/mykey.pem ubuntu@ec2-13-233-116-158.ap-south-1.compute.amazonaws.com << 'EOF'
+          cd /home/ubuntu/simple-webserver
+          git pull origin main
+          # Optional: install dependencies if package.json changed
+          npm install
+          # Kill any running Node.js process on port 3000 or similar
+          pkill -f "node server.js" || true
+          nohup node server.js > server.log 2>&1 &
+          exit
+          EOF
